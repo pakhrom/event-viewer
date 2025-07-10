@@ -1,3 +1,9 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
+
+
+* {
+  font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
+}
