@@ -17,8 +17,8 @@
 	}
 </script>
 
-<main>
-	<h1 class="text-3xl font-bold text-balance">Учебные мероприятия</h1>
+<main class="mb-2">
+	<h1 class="mb-2 text-3xl font-bold text-balance">Учебные мероприятия</h1>
 
 	{#if events}
 		<EventList {events} showEditButton></EventList>
@@ -27,9 +27,3 @@
 		<SuperDebug data={eventsParsed.error?.issues}></SuperDebug>
 	{/if}
 </main>
-
-<style>
-	h1 {
-		margin-bottom: 0.3em;
-	}
-</style>
