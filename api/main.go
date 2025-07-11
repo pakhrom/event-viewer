@@ -1,62 +1,78 @@
 package main
 
 import (
-	"help/docs"
-	_ "help/docs"
+	"errors"
+	"help/db"
+
+	_ "help/docs" // ваш пакет с swagger-документацией
+	"help/routers"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-	swaggerfiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
+	"log/slog"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+
+	docs "help/docs" // импорт с именем для доступа к SwaggerInfo
+
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
-// PingExample godoc
-// @Summary ping example
-// @Schemes
-// @Description do ping
-// @Tags example
-// @Accept json
-// @Produce json
-// @Success 200 {string} Helloworld
-// @Router /example/helloworld [get]
-func Helloworld(g *gin.Context) {
-	g.JSON(http.StatusOK, "helloworld")
+// gin-swagger middleware
+// swagger embed files
+
+func pingResponse(g echo.Context) error {
+	return g.JSON(http.StatusOK, "pong")
 }
 
-// @title Example API
-// @version 1.0
-// @description Пример API с Gin и Swagger
-// @termsOfService http://swagger.io/terms/
+// @title       My App API
+// @version     1.0
+// @description This is a sample Gin server.
+// @termsOfService http://example.com/terms/
 
-// @contact.name API Support
-// @contact.url http://www.swagger.io/support
-// @contact.email support@swagger.io
+// @contact.name   API Support
+// @contact.url    http://example.com/support
+// @contact.email  support@example.com
 
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @license.name   Apache 2.0
+// @license.url    http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host localhost:8080
-// @BasePath /api/v1
-
+// @host      localhost:8080
+// @BasePath  /api/v1
+// @schemes   http
 func main() {
 
-	db, err := DB{}.initDB("mongodb+srv://TestProjectEducationalEvents:AtoG0nw1fonvX6BR@timetableproject.mt2imbb.mongodb.net/?retryWrites=true&w=majority&appName=TimetableProject")
+	DBConnection, err := db.InitDB("mongodb+srv://TestProjectEducationalEvents:AtoG0nw1fonvX6BR@timetableproject.mt2imbb.mongodb.net/?retryWrites=true&w=majority&appName=TimetableProject")
 	if err != nil {
 		panic(err)
 	}
-	defer db.closeConnection()
+	defer DBConnection.CloseConnection()
 
-	r := gin.Default()
+	router := echo.New()
+
+	// Middleware
+	router.Use(middleware.Logger())
+	router.Use(middleware.Recover())
+
 	docs.SwaggerInfo.BasePath = "/api/v1"
-	v1 := r.Group("/api/v1")
+	v1 := router.Group("/api/v1")
 	{
 		eg := v1.Group("/example")
 		{
-			eg.GET("/helloworld", Helloworld)
+			eg.GET("/ping", pingResponse)
+		}
+
+		eventsGroup := v1.Group("/events")
+		{
+			eventsGroup.GET("", routers.RequestEvents(&DBConnection.EducationalEvents))
+			// eventsGroup.POST("")
 		}
 	}
 
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
-	r.Run(":8080")
+	router.GET("/swagger/*", echoSwagger.WrapHandler) // Swagger UI
+	// Start server
+	if err := router.Start(":8080"); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		slog.Error("failed to start server", "error", err)
+	}
 
 }

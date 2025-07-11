@@ -9,11 +9,11 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "http://swagger.io/terms/",
+        "termsOfService": "http://example.com/terms/",
         "contact": {
             "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
+            "url": "http://example.com/support",
+            "email": "support@example.com"
         },
         "license": {
             "name": "Apache 2.0",
@@ -24,9 +24,8 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/example/helloworld": {
+        "/events": {
             "get": {
-                "description": "do ping",
                 "consumes": [
                     "application/json"
                 ],
@@ -34,16 +33,54 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "example"
+                    "Events"
                 ],
-                "summary": "ping example",
+                "summary": "Get Events",
+                "parameters": [
+                    {
+                        "enum": [
+                            "past",
+                            "present",
+                            "future"
+                        ],
+                        "type": "string",
+                        "description": "Filter events by date",
+                        "name": "filter",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Event.Event"
+                            }
                         }
                     }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "Event.Event": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "startDate": {
+                    "type": "string"
                 }
             }
         }
@@ -55,9 +92,9 @@ var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
 	BasePath:         "/api/v1",
-	Schemes:          []string{},
-	Title:            "Example API",
-	Description:      "Пример API с Gin и Swagger",
+	Schemes:          []string{"http"},
+	Title:            "My App API",
+	Description:      "This is a sample Gin server.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

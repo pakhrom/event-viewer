@@ -1,4 +1,4 @@
-package main
+package Event
 
 import (
 	"context"
@@ -7,14 +7,18 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
+type EventData struct {
+	Name        string    `bson:"name,omnitempty"`
+	Description string    `bson:"description,omnitempty"`
+	StartDate   time.Time `bson:"startDate,omnitempty"`
+	EndDate     time.Time `bson:"startDate,omnitempty"`
+}
 type Event struct {
-	ID          primitive.ObjectID `bson:"_id,omitembty"`
-	name        string             `bson:"name,omnitempty"`
-	description string             `bson:"description,omnitempty"`
-	startDate   time.Time          `bson:"startDate,omnitempty"`
-	endDate     time.Time          `bson:"startDate,omnitempty"`
+	ID primitive.ObjectID `bson:"_id,omitembty"`
+	EventData
 }
 
 func (s Event) write(collection *mongo.Collection) (primitive.ObjectID, error) {
@@ -34,9 +38,9 @@ func (Event) read(collection *mongo.Collection, ID primitive.ObjectID) (Event, e
 	return loaded, nil
 }
 
-func (Event) readMany(collection *mongo.Collection, filter bson.M) ([]Event, error) {
+func ReadMany(collection mongo.Collection, filter bson.M, findOptions options.FindOptionsBuilder) ([]Event, error) {
 	var events []Event
-	cursor, err := collection.Find(context.TODO(), filter)
+	cursor, err := collection.Find(context.TODO(), filter, &findOptions)
 	if err != nil {
 		return nil, err
 	}
