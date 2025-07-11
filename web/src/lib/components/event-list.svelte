@@ -73,7 +73,7 @@
 				type="button"
 				onclick={() => {
 					infoOpen = true;
-					selectedEventIndex = eventIndex;
+					if (selectedEventIndex !== eventIndex) selectedEventIndex = eventIndex;
 				}}
 			>
 				<Event {event}></Event>
@@ -83,8 +83,8 @@
 {/if}
 
 {#if isDesktop.current}
-	<Dialog.Root bind:open={infoOpen}>
-		{#if events[selectedEventIndex]}
+	{#if events[selectedEventIndex]}
+		<Dialog.Root bind:open={infoOpen}>
 			<Dialog.Content class="sm:max-w-2/3">
 				<Dialog.Header>
 					<Dialog.Title class="flex gap-2 align-middle">
@@ -101,33 +101,29 @@
 				</Dialog.Header>
 				<Dialog.Close class={buttonVariants({ variant: 'outline' })}>Редактировать</Dialog.Close>
 			</Dialog.Content>
-		{/if}
-	</Dialog.Root>
-{:else}
+		</Dialog.Root>
+	{/if}
+{:else if events[selectedEventIndex]}
 	<Drawer.Root bind:open={infoOpen}>
-		{#if events[selectedEventIndex]}
-			<Drawer.Content>
-				<Drawer.Header class="text-left">
-					<Drawer.Title>
-						{#if new Date(events[selectedEventIndex].endDate) < today}
-							<Badge variant="secondary">Прошло</Badge>
-						{:else if new Date(events[selectedEventIndex].beginDate) <= today && today <= new Date(events[selectedEventIndex].endDate)}
-							<Badge>В процессе</Badge>
-						{/if}
-						{events[selectedEventIndex].title}
-					</Drawer.Title>
-					<Drawer.Description>
-						{events[selectedEventIndex].description}
-					</Drawer.Description>
-				</Drawer.Header>
-				{#if showEditButton}
-					<Drawer.Footer class="pt-2">
-						<Drawer.Close class={buttonVariants({ variant: 'outline' })}>
-							Редактировать
-						</Drawer.Close>
-					</Drawer.Footer>
-				{/if}
-			</Drawer.Content>
-		{/if}
+		<Drawer.Content>
+			<Drawer.Header class="text-left">
+				<Drawer.Title>
+					{#if new Date(events[selectedEventIndex].endDate) < today}
+						<Badge variant="secondary">Прошло</Badge>
+					{:else if new Date(events[selectedEventIndex].beginDate) <= today && today <= new Date(events[selectedEventIndex].endDate)}
+						<Badge>В процессе</Badge>
+					{/if}
+					{events[selectedEventIndex].title}
+				</Drawer.Title>
+				<Drawer.Description>
+					{events[selectedEventIndex].description}
+				</Drawer.Description>
+			</Drawer.Header>
+			{#if showEditButton}
+				<Drawer.Footer class="pt-2">
+					<Drawer.Close class={buttonVariants({ variant: 'outline' })}>Редактировать</Drawer.Close>
+				</Drawer.Footer>
+			{/if}
+		</Drawer.Content>
 	</Drawer.Root>
 {/if}
