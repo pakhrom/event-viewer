@@ -37,7 +37,6 @@ func ClogMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		c.SetResponse(&rw.Response)
 		err := next(c)
 
-		// Получаем статус-код, который реально отправлен клиенту
 		code := rw.status
 		if code == 0 {
 			code = c.Response().Status
@@ -45,10 +44,10 @@ func ClogMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		method := c.Request().Method
 		path := c.Request().URL.Path
+		clientIP := c.RealIP() // Получаем IP клиента
 
-		// Логируем только успешные ответы (коды < 400)
 		if code < 400 {
-			clog.Info("%s %s | %d", method, path, code)
+			clog.Info("[%d] IP: %s | %s %s ", code, clientIP, method, path)
 		}
 		return err
 	}
