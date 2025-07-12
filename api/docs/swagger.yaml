@@ -1,31 +1,29 @@
-basePath: /api/v1
 definitions:
   Event.Event:
     properties:
-      description:
-        type: string
-      endDate:
-        type: string
+      eventData:
+        $ref: '#/definitions/Event.EventData'
       id:
-        type: string
-      name:
-        type: string
-      startDate:
+        example: 60b8d295f1d2c916c4d5f1a3
         type: string
     type: object
-host: localhost:8080
+  Event.EventData:
+    properties:
+      description:
+        example: Описание мероприятия
+        type: string
+      endDate:
+        example: "2025-07-11T21:00:00Z"
+        type: string
+      name:
+        example: Концерт
+        type: string
+      startDate:
+        example: "2025-07-11T18:00:00Z"
+        type: string
+    type: object
 info:
-  contact:
-    email: support@example.com
-    name: API Support
-    url: http://example.com/support
-  description: This is a sample Gin server.
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: http://example.com/terms/
-  title: My App API
-  version: "1.0"
+  contact: {}
 paths:
   /events:
     get:
@@ -52,6 +50,94 @@ paths:
       summary: Get Events
       tags:
       - Events
-schemes:
-- http
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Event
+        in: body
+        name: event_data
+        required: true
+        schema:
+          $ref: '#/definitions/Event.EventData'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Create Event
+      tags:
+      - Events
+  /events/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Event ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: boolean
+        "404":
+          description: Not Found
+          schema: {}
+      summary: Delete Event
+      tags:
+      - Events
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Event.Event'
+      summary: Get Event
+      tags:
+      - Events
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: EventData
+        in: body
+        name: event_data
+        required: true
+        schema:
+          $ref: '#/definitions/Event.EventData'
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema: {}
+      summary: Update Event
+      tags:
+      - Events
 swagger: "2.0"

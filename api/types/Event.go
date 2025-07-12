@@ -4,32 +4,35 @@ import (
 	"context"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"github.com/billowdev/clog"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type EventData struct {
-	Name        string    `bson:"name,omnitempty"`
-	Description string    `bson:"description,omnitempty"`
-	StartDate   time.Time `bson:"startDate,omnitempty"`
-	EndDate     time.Time `bson:"startDate,omnitempty"`
+	Name        string    `bson:"name" json:"name,omitempty" example:"Концерт"`
+	Description string    `bson:"description" json:"description,omitempty" example:"Описание мероприятия"`
+	StartDate   time.Time `bson:"startDate" json:"startDate" example:"2025-07-11T18:00:00Z"`
+	EndDate     time.Time `bson:"endDate" json:"endDate" example:"2025-07-11T21:00:00Z"`
 }
+
 type Event struct {
-	ID primitive.ObjectID `bson:"_id,omitembty"`
-	EventData
+	ID        bson.ObjectID `bson:"_id" json:"id" example:"60b8d295f1d2c916c4d5f1a3"`
+	EventData EventData
 }
 
-func (s Event) write(collection *mongo.Collection) (primitive.ObjectID, error) {
-	insertedResult, err := collection.InsertOne(context.TODO(), s)
+func (s EventData) Write(collection *mongo.Collection) (bson.ObjectID, error) {
+	insertedResult, err := collection.InsertOne(context.TODO(), map[string]EventData{
+		"EventData": s,
+	})
 	if err != nil {
-		return primitive.NilObjectID, err
+		return bson.NilObjectID, err
 	}
-	return insertedResult.InsertedID.(primitive.ObjectID), nil
+	return insertedResult.InsertedID.(bson.ObjectID), nil
 }
 
-func (Event) read(collection *mongo.Collection, ID primitive.ObjectID) (Event, error) {
+func Read(collection *mongo.Collection, ID bson.ObjectID) (Event, error) {
 	var loaded Event
 	err := collection.FindOne(context.TODO(), bson.M{"_id": ID}).Decode(&loaded)
 	if err != nil {
@@ -48,6 +51,7 @@ func ReadMany(collection mongo.Collection, filter bson.M, findOptions options.Fi
 
 	for cursor.Next(context.TODO()) {
 		var event Event
+		clog.Debug("Event struct: %+v", event)
 		err := cursor.Decode(&event)
 		if err != nil {
 			return nil, err
@@ -55,4 +59,14 @@ func ReadMany(collection mongo.Collection, filter bson.M, findOptions options.Fi
 		events = append(events, event)
 	}
 	return events, nil
+}
+
+func (s EventData) Update(collection *mongo.Collection, ID bson.ObjectID) error {
+	_, err := collection.UpdateByID(context.TODO(), ID, s)
+	return err
+}
+
+func Delete(collection *mongo.Collection, ID bson.ObjectID) error {
+	_, err := collection.DeleteOne(context.TODO(), bson.M{"_id": ID})
+	return err
 }
