@@ -18,6 +18,9 @@ func InitDB(uri string) (DBService, error) {
 	if err != nil {
 		return DBService{}, err
 	}
+	if err := Client.Ping(context.TODO(), nil); err != nil {
+		return DBService{}, err
+	}
 
 	// defer func() {
 	// 	if err := Client.Disconnect(context.TODO()); err != nil {

@@ -20,72 +20,19 @@ func pingResponse(g echo.Context) error {
 }
 
 // Кастомный responseWriter для захвата статуса ответа
-type responseWriter struct {
-	echo.Response
-	status int
-}
-
-func (w *responseWriter) WriteHeader(code int) {
-	w.status = code
-	w.Response.WriteHeader(code)
-}
-
-// Middleware для логирования успешных запросов
-func ClogMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		rw := &responseWriter{Response: *c.Response(), status: 0}
-		c.SetResponse(&rw.Response)
-		err := next(c)
-
-		code := rw.status
-		if code == 0 {
-			code = c.Response().Status
-		}
-
-		method := c.Request().Method
-		path := c.Request().URL.Path
-		clientIP := c.RealIP() // Получаем IP клиента
-
-		if code < 400 {
-			clog.Info("[%d] IP: %s | %s %s ", code, clientIP, method, path)
-		}
-		return err
-	}
-}
-
 func main() {
-	DBConnection, err := db.InitDB("mongodb+srv://TestProjectEducationalEvents:AtoG0nw1fonvX6BR@timetableproject.mt2imbb.mongodb.net/?retryWrites=true&w=majority&appName=TimetableProject")
-	if err != nil {
-		panic(err)
-	}
-	defer DBConnection.CloseConnection()
-
 	router := echo.New()
 	clog.SetShowGoroutineID(false)
 	router.Use(ClogMiddleware)
 
 	// Кастомный обработчик ошибок для корректного логирования ошибок
-	router.HTTPErrorHandler = func(err error, c echo.Context) {
-		var code int
-		var message interface{}
+	router.HTTPErrorHandler = CustomErrorHandler
 
-		if he, ok := err.(*echo.HTTPError); ok {
-			code = he.Code
-			message = he.Message
-		} else {
-			code = http.StatusInternalServerError
-			message = err.Error()
-		}
-
-		clog.Error("%s %s | %d | %v", c.Request().Method, c.Request().URL.Path, code, message)
-
-		// Стандартный ответ клиенту
-		if !c.Response().Committed {
-			c.JSON(code, map[string]interface{}{
-				"error": message,
-			})
-		}
+	DBConnection, err := db.InitDB("mongodb+srv://TestProjectEducationalEvents:AtoG0nw1fonvX6BR@timetableproject.mt2imbb.mongodb.net/?retryWrites=true&w=majority&appName=TimetableProject")
+	if err != nil {
+		clog.Error("Failed to connect to MongoDB!\n%s", err.Error())
 	}
+	defer DBConnection.CloseConnection()
 
 	docs.SwaggerInfo.BasePath = "/api/v1"
 	v1 := router.Group("/api/v1")
